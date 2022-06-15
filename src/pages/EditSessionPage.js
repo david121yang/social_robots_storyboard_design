@@ -159,8 +159,9 @@ function addToJson(index) {
   }
   var newEntry = JSON.parse(JSON.stringify(emptyEntry));
   jsonData.push(newEntry);
-  for(var i = 0; i < toAdd.length; i++) {
-    jsonData.push(toAdd[i]);
+  const addLen = toAdd.length;
+  for(var i = 0; i < addLen; i++) {
+    jsonData.push(toAdd.pop());
   }
 }
 
@@ -225,7 +226,7 @@ function saveToFile() {
 
   postRequest(fileName, sanitizedJson);
 
-  setJsonData(require("../files/jsons/" + fileName));
+  // setJsonData(require("../files/jsons/" + fileName));
   
 }
 
