@@ -209,7 +209,8 @@ function saveToFile() {
   console.log(fileName);
   async function postRequest(fileName, jsonData) {
     const res = await client.post("/", {
-      file: fileName,
+      type: "json",
+      name: fileName,
       json: jsonData
     });
     if(res.data.success) alert("File saved successfully.");
@@ -261,6 +262,31 @@ function updateImage(fileName) {
   }
 }
 
+function uploadImage() {
+  async function postRequest(fileName, fileData) {
+    const res = await client.post("/image", {
+      type: "image",
+      name: fileName,
+      image: fileData
+    });
+    if(res.data.success) alert("Uploaded " + fileName + " successfully.");
+  }
+  const file = document.getElementById("file").files[0];
+      var reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = function () {
+        console.log(reader.result);
+        var str_result = reader.result + "";
+        postRequest(file.name, str_result)
+      };
+      reader.onerror = function (error) {
+        console.log('Error: ', error);
+        return "";
+      };
+  
+ 
+}
+
 // given a filename, we return the source of the image, unless it is our selectText, where we return an empty string,
 // so our image won't render.
 function getImgSrc(fileName) {
@@ -280,13 +306,16 @@ function setup() {
    
     <div className="App">
       
-      <header className="header">Edit JSON</header>{" "}
+      <header className="header"><b>Editing:</b> {fileName}</header>{" "}
       <div className="image">
         <div>
           <select id = "selectImg" onChange={updateImageSelect}>
             <option value = {imgOption}>{imgOption}</option>
             {loadImages().map((imgOption) => <option value = {imgOption}>{imgOption}</option>)}
-          </select>
+          </select> 
+        </div>
+        <div>
+          <input type="file" name="file" id="file" accept = "image/*" onChange = {uploadImage} />
         </div>
         <div style={{ minHeight: 500 }}>
           <img id="jsonImg" height="500" alt="" src = {imgSrc} />

@@ -1,10 +1,16 @@
-import React, {useEffect, useRef}  from "react";
+import React, {useEffect, useRef, useState}  from "react";
 import { Grid, Button } from "@mui/material";
 import { Link as RouterLink, useLocation, useNavigate} from "react-router-dom";
 import Lottie from "lottie-react";
 import { useRecoilState, useSetRecoilState } from "recoil";
 import { currentContext, sessionState } from "../services/state";
+import axios from "axios"
 import "../App.css"
+const { readdirSync } = require('fs')
+
+const client = axios.create({
+  baseURL: "http://localhost:5000/"
+});
 
 /*
   This should probably be overhauled for the most part, because of the structure that we store our interventions in.
@@ -15,12 +21,23 @@ const InterventionPage = (props) => {
   const setContext = useSetRecoilState(currentContext)
   const frameRef = useRef()
   const [session, setSession] = useRecoilState(sessionState);
+  
   const location = useLocation();
   const navigate = useNavigate();
+  const [interventions, setInterventions] = useState([]);
+  const [intOption, setIntOption] = useState([]);
 
   
 
   useEffect(() => {
+    async function getFolders() {
+      const res = await client.get("/interventions");
+      if(res.data.success) return res.data.result;
+      else return []
+    }
+    getFolders().then(function(result) {
+      setInterventions(JSON.parse(result));
+    });
     //what to do on page load
   }, []);
 
@@ -30,6 +47,10 @@ const emptyEntry = {
 };
 
 function loadInterventions() {
+  return interventions;
+}
+
+function loadSessions() {
   function importAll(r) {
     return r.keys();
   }
@@ -45,8 +66,10 @@ function loadInterventions() {
   return interventions;
 }
 
-function getIntervSessions(fileName) {
-  var jsons = require("../files/interventions/" + fileName)["sessions"];
+function getIntervSessions(folderName) {
+  if(folderName == "") return [];
+  
+  var jsons = require("../files/interventions/" + folderName + "/order.txt");
   var data = [];
   for (var i = 0; i < jsons.length; i++) {
     data.push(jsons[i]);
@@ -104,33 +127,46 @@ function saveToFile() {}
 function saveJSONEntry() {}
 
 function updateSession() {
-  document.getElementById("intervTitle").innerHTML = intervSessions[index];
-
+  document.getElementById("intervTitle").innerHTML = intOption;
+  intervSessions = getIntervSessions(intOption);
+  intervData = getIntervData(intervSessions);
+  
   updateImage();
 
   document.getElementById("sessionPos").innerHTML =
     "Session " + (index + 1) + " of " + intervSessions.length;
 }
 
-function updateIntervSelect() {
-
-  var sel = document.getElementById("intervSelect");
-  var text = sel.options[sel.selectedIndex].text;
+let updateIntervSelect = (e) => {
+  setIntOption(e.target.value);
+  console.log(intOption);
   index = 0;
-  intervSessions = getIntervSessions(text);
+  intervSessions = getIntervSessions(intOption);
   intervData = getIntervData(intervSessions);
   updateImage();
   document.getElementById("intervTitle").innerHTML = intervSessions[index];
 }
 
+// function updateIntervSelect() {
+
+//   var sel = document.getElementById("intervSelect");
+//   var text = sel.options[sel.selectedIndex].text;
+//   index = 0;
+//   intervSessions = getIntervSessions(text);
+//   intervData = getIntervData(intervSessions);
+//   updateImage();
+//   document.getElementById("intervTitle").innerHTML = intervSessions[index];
+// }
+
 function updateImage() {
-  if (intervData[index][0]["image"] !== selectText) {
+  if (intervData.length == 0 || intervData[index][0]["image"] == selectText) {
+    document.getElementById("intervImg1").style.display = "none";
+  }
+  else {
     document.getElementById("intervImg1").style.display = "inline";
     var imgSrc = require("../files/images/" + intervData[index][0]["image"])['default'];
     console.log(imgSrc);
     document.getElementById("intervImg1").src = imgSrc;
-  } else {
-    document.getElementById("intervImg1").style.display = "none";
   }
 }
 
@@ -177,7 +213,7 @@ function newEdit() {
 
 window.onload = function setup() {
   populateIntervSelect();
-  updateIntervSelect();
+  // updateIntervSelect();
   updateSession();
   // document.getElementById("jsonText").value = jsonData[index]["text"];
   // populateSideBar();
@@ -190,7 +226,10 @@ window.onload = function setup() {
       <header className="header">View Interventions</header>{" "}
       <div className="image">
         <div>
-          <select id="intervSelect" onSelect={updateIntervSelect}></select>
+          <select id="intervSelect" onSelect={updateIntervSelect}>
+            <option value = {intOption}>{intOption}</option>
+            {loadInterventions().map((intOption) => <option value = {intOption}>{intOption}</option>)}
+          </select>
         </div>
         <div>
           <div id="intervTitle"></div>
