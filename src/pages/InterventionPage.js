@@ -25,11 +25,14 @@ const InterventionPage = (props) => {
   const location = useLocation();
   const navigate = useNavigate();
   const [interventions, setInterventions] = useState([]);
-  const [intOption, setIntOption] = useState([]);
+  const [intOption, setIntOption] = useState("");
+  const [index, setIndex] = useState(0);
 
-  
+  var sessions = [];
+  var sessionsData = [];
 
   useEffect(() => {
+    //what to do on page load
     async function getFolders() {
       const res = await client.get("/interventions");
       if(res.data.success) return res.data.result;
@@ -38,7 +41,7 @@ const InterventionPage = (props) => {
     getFolders().then(function(result) {
       setInterventions(JSON.parse(result));
     });
-    //what to do on page load
+    
   }, []);
 
   const selectText = "No interventions";
@@ -69,7 +72,7 @@ function loadSessions() {
 function getIntervSessions(folderName) {
   if(folderName == "") return [];
   
-  var jsons = require("../files/interventions/" + folderName + "/order.txt");
+  var jsons = require("../files/interventions/" + folderName + "/order.json");
   var data = [];
   for (var i = 0; i < jsons.length; i++) {
     data.push(jsons[i]);
@@ -85,10 +88,7 @@ function getIntervData(sessions) {
   return data;
 }
 
-var intervSessions;
-var intervData;
-
-var index = 0;
+// var index = 0;
 
 function loadImages() {
   function importAll(r) {
@@ -107,7 +107,7 @@ function loadImages() {
 
 function goTo(newIndex) {
   index = newIndex;
-  updateSession();
+  updateSession("");
 }
 
 function prev() {
@@ -115,7 +115,7 @@ function prev() {
 }
 
 function next() {
-  if (index < intervSessions.length - 1) goTo(index + 1);
+  if (index < sessions.length - 1) goTo(index + 1);
 }
 
 function addSlide() {}
@@ -126,25 +126,25 @@ function saveToFile() {}
 
 function saveJSONEntry() {}
 
-function updateSession() {
+function updateSession(intOption) {
+  // console.log(intOption);
   document.getElementById("intervTitle").innerHTML = intOption;
-  intervSessions = getIntervSessions(intOption);
-  intervData = getIntervData(intervSessions);
+  sessions = getIntervSessions(intOption);
+  sessionsData = getIntervData(sessions);
   
   updateImage();
-
+  // console.log(sessions);
   document.getElementById("sessionPos").innerHTML =
-    "Session " + (index + 1) + " of " + intervSessions.length;
+    "Session " + (index + 1) + " of " + sessions.length;
 }
 
 let updateIntervSelect = (e) => {
   setIntOption(e.target.value);
-  console.log(intOption);
-  index = 0;
-  intervSessions = getIntervSessions(intOption);
-  intervData = getIntervData(intervSessions);
-  updateImage();
-  document.getElementById("intervTitle").innerHTML = intervSessions[index];
+  setIndex(0);
+  
+  updateSession(e.target.value);
+
+  document.getElementById("intervTitle").innerHTML = sessions[index];
 }
 
 // function updateIntervSelect() {
@@ -159,45 +159,45 @@ let updateIntervSelect = (e) => {
 // }
 
 function updateImage() {
-  if (intervData.length == 0 || intervData[index][0]["image"] == selectText) {
+  if (sessionsData.length == 0 || sessionsData[index][0]["image"] == selectText) {
     document.getElementById("intervImg1").style.display = "none";
   }
   else {
     document.getElementById("intervImg1").style.display = "inline";
-    var imgSrc = require("../files/images/" + intervData[index][0]["image"])['default'];
-    console.log(imgSrc);
+    var imgSrc = require("../files/images/" + sessionsData[index][0]["image"])['default'];
     document.getElementById("intervImg1").src = imgSrc;
   }
 }
 
 function populateIntervSelect() {
-  var interventions = loadInterventions();
-  var intervSelect = document.getElementById("intervSelect");
-  intervSelect.options.length = 0;
-  // var emptyOption = document.createElement("option");
-  // emptyOption.value = selectText;
-  // emptyOption.text = selectText;
-  // imageSelect.appendChild(emptyOption);
-  for (const val of interventions) {
-    var option = document.createElement("option");
-    option.value = val;
-    option.text = val;
-    intervSelect.appendChild(option);
-  }
+  // var interventions = loadInterventions();
+  // var intervSelect = document.getElementById("intervSelect");
+  // intervSelect.options.length = 0;
+  // // var emptyOption = document.createElement("option");
+  // // emptyOption.value = selectText;
+  // // emptyOption.text = selectText;
+  // // imageSelect.appendChild(emptyOption);
+  // for (const val of interventions) {
+  //   var option = document.createElement("option");
+  //   option.value = val;
+  //   option.text = val;
+  //   intervSelect.appendChild(option);
+  // }
 }
 
 function view() {
 
     // set context to the name of the json we are viewing.
-    setContext(intervSessions[index]);
+    setContext({folder: intOption, name: sessions[index]});
     navigate("/view");
 }
 
 // we set our context to a JSON with status and name, where status indicates if it's an existing json or a new one.
 // name is the name of the file that we would save to. This way, EditSessionPage will know what it's looking for.
 function edit() {
-  
-  setContext({status: "load", name: intervSessions[index]});
+  sessions = getIntervSessions(intOption);
+
+  setContext({status: "load", folder: intOption, name: sessions[index]});
   navigate("/edit");
 }
 
@@ -207,14 +207,15 @@ function newEdit() {
   if (!fileName.endsWith(".json")) {
     fileName = fileName + ".json"
   }
-  setContext({status: "new", name: fileName});
+  setContext({status: "new", folder: intOption, name: fileName});
     navigate("/edit");
 }
 
 window.onload = function setup() {
   populateIntervSelect();
+  
   // updateIntervSelect();
-  updateSession();
+  updateSession("");
   // document.getElementById("jsonText").value = jsonData[index]["text"];
   // populateSideBar();
 };
@@ -226,7 +227,7 @@ window.onload = function setup() {
       <header className="header">View Interventions</header>{" "}
       <div className="image">
         <div>
-          <select id="intervSelect" onSelect={updateIntervSelect}>
+          <select id="intervSelect" onChange={updateIntervSelect}>
             <option value = {intOption}>{intOption}</option>
             {loadInterventions().map((intOption) => <option value = {intOption}>{intOption}</option>)}
           </select>
