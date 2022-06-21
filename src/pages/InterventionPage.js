@@ -80,10 +80,10 @@ function getIntervSessions(folderName) {
   return data;
 }
 
-function getIntervData(sessions) {
+function getIntervData(sessions, folderName) {
   var data = [];
   for (var i = 0; i < sessions.length; i++) {
-    data.push(require("../files/jsons/" + sessions[i]));
+    data.push(require("../files/interventions/" + folderName + "/" + sessions[i]));
   }
   return data;
 }
@@ -106,8 +106,8 @@ function loadImages() {
 }
 
 function goTo(newIndex) {
-  index = newIndex;
-  updateSession("");
+  setIndex(newIndex);
+  updateSession(intOption, newIndex);
 }
 
 function prev() {
@@ -115,6 +115,8 @@ function prev() {
 }
 
 function next() {
+
+  sessions = getIntervSessions(intOption);
   if (index < sessions.length - 1) goTo(index + 1);
 }
 
@@ -126,13 +128,15 @@ function saveToFile() {}
 
 function saveJSONEntry() {}
 
-function updateSession(intOption) {
-  // console.log(intOption);
-  document.getElementById("intervTitle").innerHTML = intOption;
+function updateSession(intOption, index) {
+
   sessions = getIntervSessions(intOption);
-  sessionsData = getIntervData(sessions);
+  sessionsData = getIntervData(sessions, intOption);
+  // console.log(intOption);
+  document.getElementById("intervTitle").innerHTML = sessions[index];
+
   
-  updateImage();
+  updateImage(intOption, index);
   // console.log(sessions);
   document.getElementById("sessionPos").innerHTML =
     "Session " + (index + 1) + " of " + sessions.length;
@@ -142,7 +146,7 @@ let updateIntervSelect = (e) => {
   setIntOption(e.target.value);
   setIndex(0);
   
-  updateSession(e.target.value);
+  updateSession(e.target.value, 0);
 
   document.getElementById("intervTitle").innerHTML = sessions[index];
 }
@@ -158,7 +162,11 @@ let updateIntervSelect = (e) => {
 //   document.getElementById("intervTitle").innerHTML = intervSessions[index];
 // }
 
-function updateImage() {
+function updateImage(intOption, index) {
+  sessions = getIntervSessions(intOption);
+
+  sessionsData = getIntervData(sessions, intOption);
+
   if (sessionsData.length == 0 || sessionsData[index][0]["image"] == selectText) {
     document.getElementById("intervImg1").style.display = "none";
   }
@@ -207,15 +215,26 @@ function newEdit() {
   if (!fileName.endsWith(".json")) {
     fileName = fileName + ".json"
   }
-  setContext({status: "new", folder: intOption, name: fileName});
+
+  async function postRequest(fileName, folderName, index) {
+    const res = await client.post("/new", {
+      file: fileName,
+      folder: folderName,
+      index: index
+    });
+    if(!res.data.success) alert("Failed to create new file.");
+  }
+  postRequest(fileName, intOption, index).then(function(result) {
+    setContext({status: "new", folder: intOption, name: fileName});
     navigate("/edit");
+  });  
 }
 
 window.onload = function setup() {
   populateIntervSelect();
   
   // updateIntervSelect();
-  updateSession("");
+  updateSession("", 0);
   // document.getElementById("jsonText").value = jsonData[index]["text"];
   // populateSideBar();
 };

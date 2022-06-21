@@ -55,6 +55,7 @@ const EditSessionPage = () => {
   // filename and entire json data
   // image name, image source data, and accompanying text for specific slide in view
   const [fileName, setFileName] = useState("");
+  const [folderName, setFolderName] = useState("");
   const [jsonData, setJsonData] = useState([]);
   const [imgOption, setImageOption] = useState("Select image:")
   const [imgSrc, setImgSrc] = useState("");
@@ -74,6 +75,8 @@ const EditSessionPage = () => {
   }, []);
 
   useEffect(() => {
+    console.log(context);
+    setFolderName(context["folder"]);
     setFileName(context["name"]);
     if (location.pathname === "/edit" && context["status"] === "new") {
       // if new, we will create an empty json entry to put into our file json.
@@ -90,7 +93,7 @@ const EditSessionPage = () => {
       // if loaded, we just load in the file.
       console.log("loading saved project");
       // newFile = false;
-      const data = require("../files/jsons/" + context["name"]);
+      const data = require("../files/interventions/" + context["folder"] + "/" + context["name"]);
       for(var i = 0; i < data.length; i++) {
         jsonData.push(data[i]);
       }
@@ -105,7 +108,7 @@ const EditSessionPage = () => {
     }
     setup();
     // we overwrite context with none afterwards, as we have finished loading our json in.
-    setContext({status: "none", name: context["name"]});
+    setContext({status: "none", folder: context["folder"], name: context["name"]});
   }, []);
 
 
@@ -207,15 +210,16 @@ function deleteSlide() {
 // sends post request to server to save file.
 function saveToFile() {
   console.log(fileName);
-  async function postRequest(fileName, jsonData) {
+  async function postRequest(fileName, folderName, jsonData) {
     const res = await client.post("/", {
-      type: "json",
-      name: fileName,
+      file: fileName,
+      folder: folderName,
       json: jsonData
     });
-    if(res.data.success) alert("File saved successfully.");
+    if(res.data.success) alert("File saved successfully to " + fileName + " in intervention " + folderName);
   }
 
+  // remove every slide without an image
   const temp = index;
   saveJSONEntry(temp);
   var sanitizedJson = [];
@@ -225,7 +229,7 @@ function saveToFile() {
     }
   }
 
-  postRequest(fileName, sanitizedJson);
+  postRequest(fileName, folderName, sanitizedJson);
 
   // setJsonData(require("../files/jsons/" + fileName));
   

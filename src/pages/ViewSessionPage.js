@@ -45,6 +45,7 @@ const ViewSessionPage = () => {
   };
 
   const [fileName, setFileName] = useState("");
+  const [folderName, setFolderName] = useState("");
   const [jsonData, setJsonData] = useState([]);
   const [imgSrc, setImgSrc] = useState("");
   const [jsonText, setJsonText] = useState("");
@@ -65,8 +66,9 @@ const ViewSessionPage = () => {
       console.log("loading saved project");
       console.log(context);
       // newFile = false;
-      setFileName(context);
-      const data = require("../files/jsons/" + context);
+      setFileName(context["file"]);
+      setFolderName(context["folder"]);
+      const data = require("../files/interventions/" + context["folder"] + "/" + context["file"]);
       for(var i = 0; i < data.length; i++) {
         jsonData.push(data[i]);
       }

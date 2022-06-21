@@ -17,16 +17,16 @@ app.get("/", (req, res) => {
 
 // if we receive a post request to main url to save json to local system
 app.post("/", (req, res) => {
-  console.log(req.body);
+  // console.log(req.body);
 
-  console.log(`${__dirname}`);
+  // console.log(`${__dirname}`);
   // var f = new File(`${__dirname}` + req.body.file);
 
 
-  let jsonPath = path.join(__dirname, 'files', 'jsons', req.body.file);
- 
+  
   try {
-
+    let jsonPath = path.join(__dirname, 'files', 'interventions', req.body.folder, req.body.file);
+ 
     fs.writeFileSync(jsonPath, JSON.stringify(req.body.json), {encoding:'utf8',flag:'w'});
     res.send( {success: true} );
     // file written successfully
@@ -53,6 +53,37 @@ app.get("/interventions", (req, res) => {
   }
 });
 
+// post request to make new file and put into order.json of right intervention folder.
+app.post("/new", (req, res) => {
+
+  const selectText = "Select image...";
+  const emptyEntry = [{
+      image: selectText,
+      text: "",
+    }];
+
+  try {
+    
+    //insert file into folder
+    let jsonPath = path.join(__dirname, 'files', 'interventions', req.body.folder, req.body.file);
+    
+    fs.writeFileSync(jsonPath, JSON.stringify(emptyEntry), {encoding:'utf8',flag:'w'});
+
+    //insert into order.json
+    let orderFile = path.join(__dirname, 'files', 'interventions', req.body.folder, "order.json");
+    let index = req.body.index;
+
+    let rawdata = fs.readFileSync(orderFile);
+    let orderJson = JSON.parse(rawdata);
+    orderJson.splice(index, 0, req.body.file);
+    fs.writeFileSync(orderFile, JSON.stringify(orderJson), {encoding:'utf8',flag:'w'});
+
+    res.send( {success: true} );
+
+  } catch (err) {
+    console.error(err);
+  }
+});
 
 // post request to upload image. not working as of now.
 app.post("/image", (req, res) => {
