@@ -120,13 +120,28 @@ function next() {
   if (index < sessions.length - 1) goTo(index + 1);
 }
 
-function addSlide() {}
+function deleteSlide() {
+  sessions = getIntervSessions(intOption);
+  let proceed = window.confirm("Are you sure you want to delete " + sessions[index] + "?");
+  if (proceed) {
+    console.log("will get on this eventually.")
+  }
+}
 
-function deleteSlide() {}
+function addIntervention() {
+  let fileName = prompt("Enter intervention name:", "");
+  if(fileName != null) {
+    
+  }
+}
 
-function saveToFile() {}
-
-function saveJSONEntry() {}
+function deleteIntervention() {
+  // sessions = getIntervSessions(intOption);
+  let proceed = window.confirm("Are you sure you want to delete " + intOption + "?");
+  if (proceed) {
+    console.log("will get on this eventually.")
+  }
+}
 
 function updateSession(intOption, index) {
 
@@ -134,7 +149,6 @@ function updateSession(intOption, index) {
   sessionsData = getIntervData(sessions, intOption);
   // console.log(intOption);
   document.getElementById("intervTitle").innerHTML = sessions[index];
-
   
   updateImage(intOption, index);
   // console.log(sessions);
@@ -212,22 +226,25 @@ function edit() {
 function newEdit() {
   // prompt user to enter a name for our json, then set context and go to edit.
   let fileName = prompt("Enter filename:", "test.json");
-  if (!fileName.endsWith(".json")) {
-    fileName = fileName + ".json"
+  if(fileName != null) {
+    if (!fileName.endsWith(".json")) {
+      fileName = fileName + ".json"
+    }
+  
+    async function postRequest(fileName, folderName, index) {
+      const res = await client.post("/new", {
+        file: fileName,
+        folder: folderName,
+        index: index
+      });
+      if(!res.data.success) alert("Failed to create new file.");
+    }
+    postRequest(fileName, intOption, index).then(function(result) {
+      setContext({status: "new", folder: intOption, name: fileName});
+      navigate("/edit");
+    });  
   }
-
-  async function postRequest(fileName, folderName, index) {
-    const res = await client.post("/new", {
-      file: fileName,
-      folder: folderName,
-      index: index
-    });
-    if(!res.data.success) alert("Failed to create new file.");
-  }
-  postRequest(fileName, intOption, index).then(function(result) {
-    setContext({status: "new", folder: intOption, name: fileName});
-    navigate("/edit");
-  });  
+  
 }
 
 window.onload = function setup() {
@@ -257,24 +274,25 @@ window.onload = function setup() {
         <div style={{ minHeight: 500 }}>
           <img id="intervImg1" height="500" alt="" />
         </div>
-        <div className="sessionOps">
+        <div className="Session Operations">
           <button id = "viewSession" component={RouterLink} to = "/session" onClick={view}>View</button>
           <button id = "editSession" component={RouterLink} to = "/session" onClick={edit}>Edit</button>
-          <button id = "editSession" component={RouterLink} to = "/session" onClick={newEdit}>New</button>
+          
           <br />
-          <button onClick={addSlide}>Add Session</button>
+          <button id = "editSession" component={RouterLink} to = "/session" onClick={newEdit}>Add Session</button>
           <button onClick={deleteSlide}>Delete Session</button>
         </div>
       </div>
       <br></br>
-      <div className="buttons">
+      <div className="Intervention Operations">
         <div id="sessionPos">Session {index + 1} of 1</div>{" "}
         <div name="buttons">
-          <button onClick={prev}>Prev</button>
-          <button onClick={next}>Next</button>
+          <button onClick={prev}>Prev Session</button>
+          <button onClick={next}>Next Session</button>
           <br />
 
-          <button onClick={saveToFile}>Save to File</button>
+          <button onClick={addIntervention}>Add Intervention</button>
+          <button onClick={deleteIntervention}>Delete Intervention</button>
         </div>
       </div>
     </div>
