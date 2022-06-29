@@ -122,24 +122,43 @@ function next() {
 
 function deleteSlide() {
   sessions = getIntervSessions(intOption);
+  async function deleteRequest(fileName, folderName) {
+    const res = await client.post("/deleteSession", {
+      folder: folderName,
+      file: fileName
+    });
+    if(!res.data.success) alert("Failed to delete.");
+  }
   let proceed = window.confirm("Are you sure you want to delete " + sessions[index] + "?");
   if (proceed) {
-    console.log("will get on this eventually.")
+    deleteRequest(sessions[index], intOption).then(alert("Deleted succesfully."));
   }
 }
 
 function addIntervention() {
-  let fileName = prompt("Enter intervention name:", "");
-  if(fileName != null) {
-    
+  async function postRequest(folderName) {
+    const res = await client.post("/intervention", {
+      folder: folderName
+    });
+    if(!res.data.success) alert("Failed to delete.");
+  }
+  let intName = prompt("Enter intervention name:", "");
+  if(intName != null) {
+    postRequest(intName).then(alert("Added " + intName + " successfully."))
   }
 }
 
 function deleteIntervention() {
   // sessions = getIntervSessions(intOption);
+  async function deleteRequest(folderName) {
+    const res = await client.post("/deleteIntervention", {
+      folder: folderName
+    });
+    if(!res.data.success) alert("Failed to delete.");
+  }
   let proceed = window.confirm("Are you sure you want to delete " + intOption + "?");
   if (proceed) {
-    console.log("will get on this eventually.")
+    deleteRequest(intOption).then(alert("Deleted successfully."));
   }
 }
 

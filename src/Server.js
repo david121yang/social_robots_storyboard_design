@@ -66,7 +66,6 @@ app.post("/new", (req, res) => {
     
     //insert file into folder
     let jsonPath = path.join(__dirname, 'files', 'interventions', req.body.folder, req.body.file);
-    
     fs.writeFileSync(jsonPath, JSON.stringify(emptyEntry), {encoding:'utf8',flag:'w'});
 
     //insert into order.json
@@ -80,6 +79,67 @@ app.post("/new", (req, res) => {
 
     res.send( {success: true} );
 
+  } catch (err) {
+    console.error(err);
+  }
+});
+
+// deleting a session
+app.post("/deleteSession", (req, res) => {
+
+  try {
+    let folder = req.body.folder;
+    let file = req.body.file;
+    let jsonPath = path.join(__dirname, 'files', 'interventions', folder, file);
+    fs.unlinkSync(jsonPath);
+
+    let orderFile = path.join(__dirname, 'files', 'interventions', folder, "order.json");
+
+    let rawdata = fs.readFileSync(orderFile);
+    let orderJson = JSON.parse(rawdata);
+    orderJson = orderJson.filter(data => data != file);
+    fs.writeFileSync(orderFile, JSON.stringify(orderJson), {encoding:'utf8',flag:'w'});
+
+    res.send( {success: true} );
+  } catch (err) {
+    console.error(err);
+  }
+});
+
+// adding intervention
+app.post("/intervention", (req, res) => {
+
+  try {
+    let folder = req.body.folder;
+    let jsonPath = path.join(__dirname, 'files', 'interventions', folder);
+
+    fs.mkdir(jsonPath, (err) => {
+      if (err) {
+          return console.error(err);
+      }
+      console.log('Directory created successfully!');
+    });
+
+    let orderFile = path.join(__dirname, 'files', 'interventions', folder, "order.json");
+
+    fs.writeFileSync(orderFile, "[]", {encoding:'utf8',flag:'w'});
+
+    res.send( {success: true} );
+  } catch (err) {
+    console.error(err);
+  }
+});
+
+// deleting intervention
+app.post("/deleteIntervention", (req, res) => {
+
+  try {
+    let folder = req.body.folder;
+    let jsonPath = path.join(__dirname, 'files', 'interventions', folder);
+
+    fs.rmSync(jsonPath, { recursive: true, force: true });
+
+    res.send( {success: true} );
   } catch (err) {
     console.error(err);
   }
